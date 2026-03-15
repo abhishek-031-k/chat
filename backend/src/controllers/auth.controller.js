@@ -4,6 +4,7 @@ import { generateToken } from "../lib/utils.js";
 import { sendWelcomeEmail } from "../emails/emailsHandlers.js";
 import "dotenv/config";
 import { ENV } from "../lib/env.js";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async(req, res)=>{
     const {fullName, email, password} = req.body
@@ -53,9 +54,6 @@ export const signup = async(req, res)=>{
  
    }
 
-
-
-
     }else{
       res.status(400).json({message: "Invalid user data"})
     }
@@ -98,4 +96,24 @@ console.error("Error in login controller: ", error);
 export const logout = (_, res) =>{
  res.cookie("jwt", "", {maxAge:0});
  res.status(200).json({message:"Logged out successfully"});
+};
+
+export const updateProfile = async(req, res)=>{
+   try{
+ const {profilePic} = req.body;
+ if(!profilePic)return res.status(400).json({message: "Profile pic is required"})
+
+   const userId = req.uesr._id;
+
+   await cloudinary.uploader.upload(profilePic)
+ 
+   const updateUser = await User.findByIdAndUpdate
+   (userId, {profilePic:uploadResponse.secure_url},
+      {new:true});
+      res.status(200).json(updateUser);
+
+   }catch(error){
+   console.log("Error in update profile:", error);
+   res.status(500).json({message: "Internal server error"});
+   }
 };
