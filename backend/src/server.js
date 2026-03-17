@@ -8,6 +8,7 @@ import { connectDB } from "./lib/db.js"
 import { ENV } from "./lib/env.js"
 
 
+
 const app = express();
 const  __dirname = path.resolve();
 console.log(__dirname);
