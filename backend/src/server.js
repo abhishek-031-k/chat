@@ -6,6 +6,7 @@ import path from "path"
 import { connect } from "http2"
 import { connectDB } from "./lib/db.js"
 import { ENV } from "./lib/env.js"
+import cors from "cors";
 
 
 
@@ -17,6 +18,7 @@ console.log(__dirname);
 const PORT = ENV.PORT || 3000;
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({origin: ENV.CLIENT_URL, credentials: true}));
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
