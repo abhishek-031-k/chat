@@ -1,4 +1,5 @@
 import arcjet, { shield, detectBot, slidingWindow } from "@arcjet/node";
+
 import { ENV } from "./env.js";
 
 const aj = arcjet({
@@ -19,11 +20,11 @@ const aj = arcjet({
       ],
     }),
     // Create a token bucket rate limit. Other algorithms are supported.
-   slidingWindow({
-  mode:"LIVE",
-  max:100,
-  interval:60,
-   }),
+    slidingWindow({
+      mode: "LIVE", // Blocks requests. Use "DRY_RUN" to log only
+      max: 100,
+      interval: 60,
+    }),
   ],
 });
 
