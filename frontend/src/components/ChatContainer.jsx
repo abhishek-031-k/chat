@@ -19,24 +19,30 @@ function ChatContainer() {
   const messageEndRef = useRef(null);
 
   useEffect(() => {
-    getMessagesByUserId(selectedUser._id);
-    subscribeToMessages();
+    if (selectedUser?._id) {
+      getMessagesByUserId(selectedUser._id);
+      subscribeToMessages();
+    }
 
-    // clean up
     return () => unsubscribeFromMessages();
-  }, [selectedUser, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
+  }, [selectedUser?._id, getMessagesByUserId, subscribeToMessages, unsubscribeFromMessages]);
 
   useEffect(() => {
-    if (messageEndRef.current) {
+    if (messageEndRef.current && messages.length > 0) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
   return (
-    <>
+    <div className="flex-1 flex flex-col overflow-hidden h-full">
+      {/* 1. Header stays at the top */}
       <ChatHeader />
+
+      {/* 2. Middle area swaps based on state */}
       <div className="flex-1 px-6 overflow-y-auto py-8">
-        {messages.length > 0 && !isMessagesLoading ? (
+        {isMessagesLoading ? (
+          <MessagesLoadingSkeleton />
+        ) : messages.length > 0 ? (
           <div className="max-w-3xl mx-auto space-y-6">
             {messages.map((msg) => (
               <div
@@ -48,7 +54,7 @@ function ChatContainer() {
                     msg.senderId === authUser._id
                       ? "bg-cyan-600 text-white"
                       : "bg-slate-800 text-slate-200"
-                  }`}
+                  } ${msg.isOptimistic ? "opacity-70" : "opacity-100"}`}
                 >
                   {msg.image && (
                     <img src={msg.image} alt="Shared" className="rounded-lg h-48 object-cover" />
@@ -63,18 +69,16 @@ function ChatContainer() {
                 </div>
               </div>
             ))}
-          
             <div ref={messageEndRef} />
           </div>
-        ) : isMessagesLoading ? (
-          <MessagesLoadingSkeleton />
         ) : (
-          <NoChatHistoryPlaceholder name={selectedUser.fullName} />
+          <NoChatHistoryPlaceholder name={selectedUser?.fullName} />
         )}
       </div>
 
+      {/* 3. Input stays at the bottom */}
       <MessageInput />
-    </>
+    </div>
   );
 }
 
