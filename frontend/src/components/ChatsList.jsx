@@ -6,21 +6,26 @@ import NoChatsFound from "./NoChatsFound";
 
 function ChatsList() {
   const { getMyChatPartners, chats = [], isUsersLoading, setSelectedUser, selectedUser } = useChatStore();
-  const { onlineUsers = [] } = useAuthStore();
+  
+  // 1. IMPORT AUTHUSER: Grab your own profile data from the store
+  const { authUser, onlineUsers = [] } = useAuthStore();
 
   useEffect(() => {
     getMyChatPartners();
   }, [getMyChatPartners]);
 
-  // 1. If we are loading, ONLY show the skeleton.
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
-  // 2. ONLY show placeholder if loading is done AND array is empty.
-  if (!isUsersLoading && chats.length === 0) return <NoChatsFound />;
+  // 2. THE FIX: Filter out your own ID from the chats array
+  const filteredChats = chats.filter((chat) => chat?._id !== authUser?._id);
+
+  // 3. Update the empty check to look at the NEW filtered list
+  if (!isUsersLoading && filteredChats.length === 0) return <NoChatsFound />;
 
   return (
     <div className="flex flex-col gap-1 overflow-y-auto">
-      {chats.map((chat) => (
+      {/* 4. Map over filteredChats instead of the raw chats array */}
+      {filteredChats.map((chat) => (
         <button
           key={chat?._id}
           onClick={() => setSelectedUser(chat)}
