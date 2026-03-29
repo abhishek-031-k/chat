@@ -11,14 +11,20 @@ import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
 
-app.use(express.json({ limit: "5mb" })); // req.body
-app.use(cors({ origin: ENV.CLIENT_URL, credentials: true }));
+// CORS FIX: Explicitly allow the origin and methods
+app.use(cors({ 
+  origin: ENV.CLIENT_URL || "https://chat-4djc.vercel.app", // Fallback link
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
+}));
+
+app.use(express.json({ limit: "5mb" })); 
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/messages", messageRoutes);
 
-// Ek simple route taaki browser mein check kar sakein ki backend chal raha hai
 app.get("/", (req, res) => {
   res.send("Chat API and Backend Server is Running successfully! 🚀");
 });
