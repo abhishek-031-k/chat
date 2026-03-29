@@ -17,7 +17,7 @@ function ChatsList() {
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
   // 2. THE FIX: Filter out your own ID from the chats array
-  const filteredChats = chats.filter((chat) => chat?._id !== authUser?._id);
+  const filteredChats = chats?.filter((chat) => chat?._id !== authUser?._id) || [];
 
   // 3. Update the empty check to look at the NEW filtered list
   if (!isUsersLoading && filteredChats.length === 0) return <NoChatsFound />;
