@@ -11,13 +11,19 @@ import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
 
-// CORS FIX: Explicitly allow the origin and methods
-app.use(cors({ 
-  origin: ENV.CLIENT_URL || "https://chatapp-swart-nu-58.vercel.app", // Fallback link
+// Define the rules once
+const corsOptions = {
+  origin: ENV.CLIENT_URL || "https://chatapp-swart-nu-58.vercel.app",
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
-}));
+};
+
+// 1. Standard CORS middleware
+app.use(cors(corsOptions));
+
+// 2. BULLETPROOF FIX: Explicitly handle the preflight OPTIONS requests
+app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "5mb" })); 
 app.use(cookieParser());
