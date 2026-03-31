@@ -3,7 +3,7 @@ import axios from "axios";
 // 1. Base URL decide karein: Localhost for development, Render for production
 const BASE_URL = import.meta.env.MODE === "development" 
   ? "http://localhost:3000/api" 
-  : "https://chat-app-backend-abhishek.onrender.com/api"; // Aapka Render link
+  : "https://chat-jssx.onrender.com/api"; // Updated to your NEW working Render link
 
 export const axiosInstance = axios.create({
   baseURL: BASE_URL,
