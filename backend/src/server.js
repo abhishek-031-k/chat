@@ -11,18 +11,33 @@ import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
 
-// Define the rules once
+// 1. Define ALL allowed links (New Vercel, Old Vercel, and Localhost)
+const allowedOrigins = [
+  "https://chat-q153.vercel.app",           // Your NEW Vercel link
+  "https://chatapp-swart-nu-58.vercel.app", // Your old Vercel link
+  "http://localhost:5173",                  // Local Vite dev server
+  "http://localhost:3000"                   // Local React dev server
+];
+
+// 2. Set up the rules
 const corsOptions = {
-  origin: ENV.CLIENT_URL || "https://chatapp-swart-nu-58.vercel.app",
+  origin: function (origin, callback) {
+    // Allow if it's in our list, OR if it's a tool like Postman (no origin)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 };
 
-// 1. Standard CORS middleware
+// 3. Apply the Standard CORS middleware
 app.use(cors(corsOptions));
 
-// 2. BULLETPROOF FIX: Explicitly handle the preflight OPTIONS requests
+// 4. BULLETPROOF FIX: Explicitly handle the preflight OPTIONS requests
 app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "5mb" })); 
