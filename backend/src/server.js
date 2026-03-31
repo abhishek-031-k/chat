@@ -13,7 +13,7 @@ const PORT = ENV.PORT || 3000;
 
 // CORS FIX: Explicitly allow the origin and methods
 app.use(cors({ 
-  origin: ENV.CLIENT_URL || "https://chat-4djc.vercel.app", // Fallback link
+  origin: ENV.CLIENT_URL || "https://chatapp-swart-nu-58.vercel.app", // Fallback link
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
