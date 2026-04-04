@@ -1,4 +1,5 @@
 import express from "express";
+import { ENV } from "./lib/env.js";
 import cookieParser from "cookie-parser";
 import path from "path";
 import cors from "cors";
@@ -6,7 +7,7 @@ import cors from "cors";
 import authRoutes from "./routes/auth.js";
 import messageRoutes from "./routes/message.js";
 import { connectDB } from "./lib/db.js";
-import { ENV } from "./lib/env.js";
+
 import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
