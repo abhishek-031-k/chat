@@ -17,7 +17,6 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
     }
 
-    // check if email is valid: regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ message: "Invalid email format" });
@@ -26,7 +25,6 @@ export const signup = async (req, res) => {
     const user = await User.findOne({ email });
     if (user) return res.status(400).json({ message: "Email already exists" });
 
-    // Hash password
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
@@ -37,7 +35,6 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
-      // Persist user first, then issue auth cookie
       const savedUser = await newUser.save();
       generateToken(savedUser._id, res);
 
@@ -91,7 +88,6 @@ export const login = async (req, res) => {
 };
 
 export const logout = (_, res) => {
-  // FIXED: Must use the exact same cookie settings to delete the cross-domain cookie
   res.cookie("jwt", "", {
     maxAge: 0,
     httpOnly: true,
@@ -109,17 +105,28 @@ export const updateProfile = async (req, res) => {
 
     const userId = req.user._id;
 
+    // --- BULLETPROOF FIX START ---
+    // We re-configure Cloudinary right here to ensure the keys are 
+    // fresh and populated from the environment variables.
+    cloudinary.config({
+      cloud_name: ENV.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: ENV.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY,
+      api_secret: ENV.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_API_SECRET,
+    });
+    // --- BULLETPROOF FIX END ---
+
     const uploadResponse = await cloudinary.uploader.upload(profilePic);
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
-    );
+    ).select("-password"); // Hide password in response
 
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("Error in update profile:", error);
-    res.status(500).json({ message: "Internal server error" });
+    // Return the specific error message so we can see it in the frontend console
+    res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
