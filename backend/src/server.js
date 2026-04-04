@@ -11,10 +11,9 @@ import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
 
-// 1. Define ALL allowed links (New Vercel, Old Vercel, and Localhost)
 const allowedOrigins = [
-  "https://chat-q153.vercel.app",           // Your NEW Vercel link
-  "https://chatapp-swart-nu-58.vercel.app", // Your old Vercel link
+  "https://chat-a4xr.vercel.app",           // Your active Vercel link
+  "https://chat-q153.vercel.app",           // Your other Vercel link
   "http://localhost:5173",                  // Local Vite dev server
   "http://localhost:3000"                   // Local React dev server
 ];
