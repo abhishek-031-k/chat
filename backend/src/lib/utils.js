@@ -11,15 +11,15 @@ export const generateToken = (userId, res) => {
     expiresIn: "7d",
   });
 
+  // Check if we are in development mode
+  const isDevelopment = ENV.NODE_ENV === "development";
+
   res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // MS
-    httpOnly: true, // prevent XSS attacks: cross-site scripting
-    sameSite: "none", // CSRF attacks
-    secure: ENV.NODE_ENV === "development" ? false : true,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in MS
+    httpOnly: true, // Prevent XSS attacks
+    sameSite: isDevelopment ? "strict" : "none", // 'strict' for local, 'none' for Vercel->Render
+    secure: !isDevelopment, // false for local, true for Vercel->Render
   });
 
   return token;
 };
-
-// http://localhost
-// https://dsmakmk.com
