@@ -106,12 +106,12 @@ export const updateProfile = async (req, res) => {
     const userId = req.user._id;
 
     // --- BULLETPROOF FIX START ---
-    // We re-configure Cloudinary right here to ensure the keys are 
-    // fresh and populated from the environment variables.
+    // Manually setting the config inside the function ensures that 
+    // Cloudinary definitely sees the keys from the environment at runtime.
     cloudinary.config({
-      cloud_name: ENV.CLOUDINARY_CLOUD_NAME || process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: ENV.CLOUDINARY_API_KEY || process.env.CLOUDINARY_API_KEY,
-      api_secret: ENV.CLOUDINARY_API_SECRET || process.env.CLOUDINARY_API_SECRET,
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || ENV.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY || ENV.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET || ENV.CLOUDINARY_API_SECRET,
     });
     // --- BULLETPROOF FIX END ---
 
@@ -121,12 +121,12 @@ export const updateProfile = async (req, res) => {
       userId,
       { profilePic: uploadResponse.secure_url },
       { new: true }
-    ).select("-password"); // Hide password in response
+    ).select("-password");
 
     res.status(200).json(updatedUser);
   } catch (error) {
     console.log("Error in update profile:", error);
-    // Return the specific error message so we can see it in the frontend console
+    // Returning error.message helps you see if it's "Must supply api_key" or something else
     res.status(500).json({ message: error.message || "Internal server error" });
   }
 };
