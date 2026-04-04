@@ -12,10 +12,9 @@ import { app, server } from "./lib/socket.js";
 const PORT = ENV.PORT || 3000;
 
 const allowedOrigins = [
-  "https://chat-a4xr.vercel.app",           // Your active Vercel link
-  "https://chat-q153.vercel.app",           // Your other Vercel link
-  "http://localhost:5173",                  // Local Vite dev server
-  "http://localhost:3000"                   // Local React dev server
+  "https://chat-a4xr.vercel.app",                    
+  "http://localhost:5173",                
+  "http://localhost:3000"                   
 ];
 
 // 2. Set up the rules
