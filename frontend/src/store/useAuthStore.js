@@ -3,7 +3,6 @@ import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-// ✅ FIX: URL ko production mein Render par aur local mein localhost par point karein
 const BASE_URL = import.meta.env.MODE === "development" 
   ? "http://localhost:3000" 
   : "https://chat-jssx.onrender.com"; 
@@ -17,12 +16,10 @@ export const useAuthStore = create((set, get) => ({
   socket: null,
   onlineUsers: [],
 
-  // ✅ PAGE REFRESH FIX: Check if user is still logged in
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
       set({ authUser: res.data });
-      // User milte hi socket connect karo
       get().connectSocket();
     } catch (error) {
       console.log("Error in authCheck:", error);
@@ -52,7 +49,6 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
       toast.success("Logged in successfully");
-      // Login hote hi socket connect karo
       get().connectSocket();
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
@@ -63,11 +59,15 @@ export const useAuthStore = create((set, get) => ({
 
   logout: async () => {
     try {
+      // 1. Tell backend to clear cookies
       await axiosInstance.post("/auth/logout");
+      
+      // 2. Properly disconnect socket first
+      get().disconnectSocket();
+
+      // 3. Clear local state
       set({ authUser: null });
       toast.success("Logged out successfully");
-      // Logout par socket disconnect karo
-      get().disconnectSocket();
     } catch (error) {
       toast.error("Error logging out");
       console.log("Logout error:", error);
@@ -88,10 +88,8 @@ export const useAuthStore = create((set, get) => ({
     }
   },
 
-  // ✅ SOCKET FIX: Ensure it connects to Render and passes the User ID
   connectSocket: () => {
     const { authUser } = get();
-    // Agar user nahi hai ya socket already chal raha hai toh stop
     if (!authUser || get().socket?.connected) return;
 
     const socket = io(BASE_URL, {
@@ -99,27 +97,21 @@ export const useAuthStore = create((set, get) => ({
         userId: authUser._id,
       },
       withCredentials: true,
-      // Polling helps if WebSocket is blocked by firewalls/Render sleep
       transports: ["websocket", "polling"], 
     });
 
     socket.connect();
-
     set({ socket: socket });
 
-    // ✅ STATUS FIX: Listen for online users from backend
     socket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
-
-    // Debugging logs
-    socket.on("connect", () => console.log("Socket connected successfully!"));
-    socket.on("connect_error", (err) => console.log("Socket Connection Error:", err.message));
   },
 
   disconnectSocket: () => {
     const { socket } = get();
-    if (socket?.connected) {
+    // If socket exists and is connected, kill it safely
+    if (socket) {
       socket.disconnect();
       set({ socket: null, onlineUsers: [] });
     }
