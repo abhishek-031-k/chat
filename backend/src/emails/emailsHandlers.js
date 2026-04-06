@@ -3,22 +3,21 @@ import { createWelcomeEmailTemplate } from "./emailTemplate.js";
 import { ENV } from "../lib/env.js";
 
 const transporter = nodemailer.createTransport({
-  // smtp.gmail.com ki jagah direct IP use kar rahe hain
-  host: "74.125.193.108", 
-  port: 465,
-  secure: true,
+  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // Port 587 ke liye hamesha false rakhein
   auth: {
     user: ENV.GMAIL_USER,
     pass: ENV.GMAIL_APP_PASSWORD,
   },
-  // Render ke liye extra settings
   tls: {
     rejectUnauthorized: false,
-    minVersion: "TLSv1.2"
+    ciphers: 'SSLv3' // Purane protocols allow karne ke liye
   },
-  connectionTimeout: 30000, // 30 seconds tak wait karega
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
+  connectionTimeout: 40000,
+  greetingTimeout: 40000,
+  socketTimeout: 40000,
 });
 
 export const sendWelcomeEmail = async (email, name, clientURL) => {
@@ -31,9 +30,8 @@ export const sendWelcomeEmail = async (email, name, clientURL) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", info.messageId);
+    console.log("Email sent successfully via Port 587:", info.messageId);
   } catch (error) {
     console.error("Nodemailer Error Details:", error);
-    // Agar phir bhi error aaye toh humein pata chal jayega
   }
 };
