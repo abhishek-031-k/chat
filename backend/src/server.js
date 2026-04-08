@@ -18,10 +18,8 @@ const allowedOrigins = [
   "http://localhost:3000"                   
 ];
 
-// 2. Set up the rules
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow if it's in our list, OR if it's a tool like Postman (no origin)
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -33,10 +31,8 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization", "Cookie"]
 };
 
-// 3. Apply the Standard CORS middleware
 app.use(cors(corsOptions));
 
-// 4. BULLETPROOF FIX: Explicitly handle the preflight OPTIONS requests
 app.options("*", cors(corsOptions));
 
 app.use(express.json({ limit: "5mb" })); 
@@ -49,7 +45,7 @@ app.get("/", (req, res) => {
   res.send("Chat API and Backend Server is Running successfully! 🚀");
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log("Server running on port: " + PORT);
   connectDB();
 });
