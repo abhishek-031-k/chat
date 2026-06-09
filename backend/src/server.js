@@ -13,7 +13,7 @@ import { app, server } from "./lib/socket.js";
 const PORT = ENV.PORT || 3000;
 
 const allowedOrigins = [
-  "https://chat-a4xr.vercel.app",                    
+  "https://chat-nt1m1nbag-abhishek-031-ks-projects.vercel.app/login",                    
   "http://localhost:5173",                
   "http://localhost:3000"                   
 ];
