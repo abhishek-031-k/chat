@@ -1,48 +1,43 @@
-import { Navigate, Route, Routes } from "react-router";
-import ChatPage from "./pages/ChatPage";
-import LoginPage from "./pages/LoginPage";
-import SignUp from "./pages/SignUpPage";
-import { useAuthStore } from "./store/useAuthStore";
-import { useEffect } from "react";
-import PageLoader from "./components/PageLoader";
+import { create } from "zustand";
+import { axiosInstance } from "../lib/axios"; // ✅ Make sure this points correctly to your axios file
+import toast from "react-hot-toast";
 
-import { Toaster } from "react-hot-toast";
+export const useAuthStore = create((set) => ({
+  authUser: null,
+  isCheckingAuth: true,
 
-function App() {
-  const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
+  // Checks if the user is already logged in when the app starts
+  checkAuth: async () => {
+    try {
+      const res = await axiosInstance.get("/auth/check");
+      set({ authUser: res.data });
+    } catch (error) {
+      console.log("Error in checkAuth:", error);
+      set({ authUser: null });
+    } finally {
+      set({ isCheckingAuth: false });
+    }
+  },
 
-  useEffect(() => {
-    checkAuth();
-  }, []); // ✅ FIX: removed dependency causing production crash
+  // Login Function
+  login: async (data) => {
+    try {
+      const res = await axiosInstance.post("/auth/login", data);
+      set({ authUser: res.data });
+      toast.success("Logged in successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Login failed");
+    }
+  },
 
-  if (isCheckingAuth) return <PageLoader />;
-
-  return (
-    <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
-      
-      {/* DECORATORS - GRID BG & GLOW SHAPES */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]" />
-      <div className="absolute top-0 -left-4 size-96 bg-pink-500 opacity-20 blur-[100px]" />
-      <div className="absolute bottom-0 -right-4 size-96 bg-cyan-500 opacity-20 blur-[100px]" />
-
-      <Routes>
-        <Route
-          path="/"
-          element={authUser ? <ChatPage /> : <Navigate to={"/login"} />}
-        />
-        <Route
-          path="/login"
-          element={!authUser ? <LoginPage /> : <Navigate to={"/"} />}
-        />
-        <Route
-          path="/signup"
-          element={!authUser ? <SignUp /> : <Navigate to={"/"} />}
-        />
-      </Routes>
-
-      <Toaster />
-    </div>
-  );
-}
-
-export default App;
+  // Logout Function
+  logout: async () => {
+    try {
+      await axiosInstance.post("/auth/logout");
+      set({ authUser: null });
+      toast.success("Logged out successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Logout failed");
+    }
+  },
+}));
