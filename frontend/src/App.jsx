@@ -8,7 +8,7 @@ import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
 
 function App() {
-  // Standard Zustand mapping structure to avoid minification runtime error 'e is not a function'
+  // ✅ Zustand v5 optimized explicit extraction
   const checkAuth = useAuthStore((state) => state.checkAuth);
   const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
   const authUser = useAuthStore((state) => state.authUser);
@@ -31,7 +31,7 @@ function App() {
       <Routes>
         <Route path="/" element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
         <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
-        <Route path="/signup" element={!authUser ? <SignUp/> : <Navigate to={"/"} />} />
+        <Route path="/signup" element={!authUser ? <SignUp /> : <Navigate to={"/"} />} />
       </Routes>
 
       <Toaster />
