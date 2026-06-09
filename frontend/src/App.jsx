@@ -3,27 +3,41 @@ import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import SignUp from "./pages/SignUpPage";
 import { useAuthStore } from "./store/useAuthStore";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
 
 function App() {
+  // ✅ Zustand hook call standard format
   const store = useAuthStore();
   
-  // Explicitly mapping variables locally to prevent 'e is not a function' minifier rename breakdown
-  const checkAuth = store ? store.checkAuth : null;
+  // ✅ Crucial Fix: Use a mutable reference to save the function instance 
+  // to completely protect it from React 19 production variable tracking collapse
+  const checkAuthRef = useRef(null);
+
+  if (store && store.checkAuth) {
+    checkAuthRef.current = store.checkAuth;
+  }
+
+  useEffect(() => {
+    // Isolated local runtime call to prevent 'e is not a function' crash
+    const executeAuth = async () => {
+      if (checkAuthRef.current && typeof checkAuthRef.current === "function") {
+        try {
+          await checkAuthRef.current();
+        } catch (err) {
+          console.error("Auth check internal failure:", err);
+        }
+      }
+    };
+    executeAuth();
+  }, []); // Run safely once on component layout mount
+
+  // Safe checks for rendering states
   const isCheckingAuth = store ? store.isCheckingAuth : true;
   const authUser = store ? store.authUser : null;
 
-  useEffect(() => {
-    if (typeof checkAuth === "function") {
-      checkAuth();
-    }
-  }, [checkAuth]);
-
-  if (isCheckingAuth) {
-    return <PageLoader />;
-  }
+  if (isCheckingAuth) return <PageLoader />;
 
   return (
     <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
