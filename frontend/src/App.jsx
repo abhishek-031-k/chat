@@ -5,14 +5,18 @@ import SignUp from "./pages/SignUpPage";
 import { useAuthStore } from "./store/useAuthStore";
 import { useEffect } from "react";
 import PageLoader from "./components/PageLoader";
-
 import { Toaster } from "react-hot-toast";
 
 function App() {
-  const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
+  // Standard Zustand mapping structure to avoid minification runtime error 'e is not a function'
+  const checkAuth = useAuthStore((state) => state.checkAuth);
+  const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
+  const authUser = useAuthStore((state) => state.authUser);
 
   useEffect(() => {
-    checkAuth();
+    if (typeof checkAuth === "function") {
+      checkAuth();
+    }
   }, [checkAuth]);
 
   if (isCheckingAuth) return <PageLoader />;
@@ -34,4 +38,5 @@ function App() {
     </div>
   );
 }
+
 export default App;
