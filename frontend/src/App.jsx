@@ -8,10 +8,12 @@ import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
 
 function App() {
-  // ✅ Zustand v5 optimized explicit extraction
-  const checkAuth = useAuthStore((state) => state.checkAuth);
-  const isCheckingAuth = useAuthStore((state) => state.isCheckingAuth);
-  const authUser = useAuthStore((state) => state.authUser);
+  const store = useAuthStore();
+  
+  // Explicitly mapping variables locally to prevent 'e is not a function' minifier rename breakdown
+  const checkAuth = store ? store.checkAuth : null;
+  const isCheckingAuth = store ? store.isCheckingAuth : true;
+  const authUser = store ? store.authUser : null;
 
   useEffect(() => {
     if (typeof checkAuth === "function") {
@@ -19,7 +21,9 @@ function App() {
     }
   }, [checkAuth]);
 
-  if (isCheckingAuth) return <PageLoader />;
+  if (isCheckingAuth) {
+    return <PageLoader />;
+  }
 
   return (
     <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
@@ -29,9 +33,9 @@ function App() {
       <div className="absolute bottom-0 -right-4 size-96 bg-cyan-500 opacity-20 blur-[100px]" />
 
       <Routes>
-        <Route path="/" element={authUser ? <ChatPage /> : <Navigate to={"/login"} />} />
-        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to={"/"} />} />
-        <Route path="/signup" element={!authUser ? <SignUp /> : <Navigate to={"/"} />} />
+        <Route path="/" element={authUser ? <ChatPage /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" replace />} />
+        <Route path="/signup" element={!authUser ? <SignUp /> : <Navigate to="/" replace />} />
       </Routes>
 
       <Toaster />
