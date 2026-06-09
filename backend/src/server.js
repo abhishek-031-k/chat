@@ -12,18 +12,12 @@ import { app, server } from "./lib/socket.js";
 
 const PORT = ENV.PORT || 3000;
 
-const allowedOrigins = [
-  "https://chatapp-9a1t97bxr-abhishek-031-ks-projects.vercel.app",                    
-  "http://localhost:5173",                
-  "http://localhost:3000"                   
-];
-
 const corsOptions = {
   origin: function (origin, callback) {
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+    if (!origin || origin.endsWith(".vercel.app")) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error("Not allowed by CORS"));
     }
   },
   credentials: true,
@@ -35,7 +29,7 @@ app.use(cors(corsOptions));
 
 app.options("*", cors(corsOptions));
 
-app.use(express.json({ limit: "5mb" })); 
+app.use(express.json({ limit: "5mb" }));
 app.use(cookieParser());
 
 app.use("/api/auth", authRoutes);
