@@ -1,119 +1,48 @@
-import { create } from "zustand";
-import { axiosInstance } from "../lib/axios";
-import toast from "react-hot-toast";
-import { io } from "socket.io-client";
+import { Navigate, Route, Routes } from "react-router";
+import ChatPage from "./pages/ChatPage";
+import LoginPage from "./pages/LoginPage";
+import SignUp from "./pages/SignUpPage";
+import { useAuthStore } from "./store/useAuthStore";
+import { useEffect } from "react";
+import PageLoader from "./components/PageLoader";
 
-const BASE_URL = import.meta.env.MODE === "development" 
-  ? "http://localhost:3000" 
-  : "https://chat-jssx.onrender.com"; 
+import { Toaster } from "react-hot-toast";
 
-export const useAuthStore = create((set, get) => ({
-  authUser: null,
-  isCheckingAuth: true,
-  isSigningUp: false,
-  isLoggingIn: false,
-  isUpdatingProfile: false,
-  socket: null,
-  onlineUsers: [],
+function App() {
+  const { checkAuth, isCheckingAuth, authUser } = useAuthStore();
 
-  checkAuth: async () => {
-    try {
-      const res = await axiosInstance.get("/auth/check");
-      set({ authUser: res.data });
-      get().connectSocket();
-    } catch (error) {
-      console.log("Error in authCheck:", error);
-      set({ authUser: null });
-    } finally {
-      set({ isCheckingAuth: false });
-    }
-  },
+  useEffect(() => {
+    checkAuth();
+  }, []); // ✅ FIX: removed dependency causing production crash
 
-  signup: async (data) => {
-    set({ isSigningUp: true });
-    try {
-      const res = await axiosInstance.post("/auth/signup", data);
-      set({ authUser: res.data });
-      toast.success("Account created successfully!");
-      get().connectSocket();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Signup failed");
-    } finally {
-      set({ isSigningUp: false });
-    }
-  },
+  if (isCheckingAuth) return <PageLoader />;
 
-  login: async (data) => {
-    set({ isLoggingIn: true });
-    try {
-      const res = await axiosInstance.post("/auth/login", data);
-      set({ authUser: res.data });
-      toast.success("Logged in successfully");
-      get().connectSocket();
-    } catch (error) {
-      toast.error(error.response?.data?.message || "Login failed");
-    } finally {
-      set({ isLoggingIn: false });
-    }
-  },
-
-  logout: async () => {
-    try {
-      // 1. Tell backend to clear cookies
-      await axiosInstance.post("/auth/logout");
+  return (
+    <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
       
-      // 2. Properly disconnect socket first
-      get().disconnectSocket();
+      {/* DECORATORS - GRID BG & GLOW SHAPES */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]" />
+      <div className="absolute top-0 -left-4 size-96 bg-pink-500 opacity-20 blur-[100px]" />
+      <div className="absolute bottom-0 -right-4 size-96 bg-cyan-500 opacity-20 blur-[100px]" />
 
-      // 3. Clear local state
-      set({ authUser: null });
-      toast.success("Logged out successfully");
-    } catch (error) {
-      toast.error("Error logging out");
-      console.log("Logout error:", error);
-    }
-  },
+      <Routes>
+        <Route
+          path="/"
+          element={authUser ? <ChatPage /> : <Navigate to={"/login"} />}
+        />
+        <Route
+          path="/login"
+          element={!authUser ? <LoginPage /> : <Navigate to={"/"} />}
+        />
+        <Route
+          path="/signup"
+          element={!authUser ? <SignUp /> : <Navigate to={"/"} />}
+        />
+      </Routes>
 
-  updateProfile: async (data) => {
-    set({ isUpdatingProfile: true });
-    try {
-      const res = await axiosInstance.put("/auth/update-profile", data);
-      set({ authUser: res.data });
-      toast.success("Profile updated successfully");
-    } catch (error) {
-      console.log("Error in update profile:", error);
-      toast.error(error.response?.data?.message || "Update failed");
-    } finally {
-      set({ isUpdatingProfile: false });
-    }
-  },
+      <Toaster />
+    </div>
+  );
+}
 
-  connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
-
-    const socket = io(BASE_URL, {
-      query: {
-        userId: authUser._id,
-      },
-      withCredentials: true,
-      transports: ["websocket", "polling"], 
-    });
-
-    socket.connect();
-    set({ socket: socket });
-
-    socket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
-    });
-  },
-
-  disconnectSocket: () => {
-    const { socket } = get();
-    // If socket exists and is connected, kill it safely
-    if (socket) {
-      socket.disconnect();
-      set({ socket: null, onlineUsers: [] });
-    }
-  },
-}));
+export default App;
