@@ -1,12 +1,13 @@
 import { create } from "zustand";
-import { axiosInstance } from "../lib/axios.js"; // ✅ Added explicit .js extension to help Vite
+import { axiosInstance } from "../lib/axios";
 import toast from "react-hot-toast";
 
-export const useAuthStore = create((set) => ({
+// ✅ Explicitly creating the store configuration object to bypass Vite 8 production variable minifier crash
+const storeConfig = (set) => ({
   authUser: null,
   isCheckingAuth: true,
+  isLoggingIn: false, // Added to prevent undefined states in LoginPage
 
-  // Checks if the user is already logged in when the app starts
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
@@ -19,18 +20,19 @@ export const useAuthStore = create((set) => ({
     }
   },
 
-  // Login Function
   login: async (data) => {
+    set({ isLoggingIn: true });
     try {
       const res = await axiosInstance.post("/auth/login", data);
       set({ authUser: res.data });
       toast.success("Logged in successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Login failed");
+    } finally {
+      set({ isLoggingIn: false });
     }
   },
 
-  // Logout Function
   logout: async () => {
     try {
       await axiosInstance.post("/auth/logout");
@@ -40,4 +42,7 @@ export const useAuthStore = create((set) => ({
       toast.error(error.response?.data?.message || "Logout failed");
     }
   },
-}));
+});
+
+// Create store cleanly
+export const useAuthStore = create(storeConfig);
