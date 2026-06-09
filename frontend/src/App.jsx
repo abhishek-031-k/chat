@@ -3,42 +3,86 @@ import ChatPage from "./pages/ChatPage";
 import LoginPage from "./pages/LoginPage";
 import SignUp from "./pages/SignUpPage";
 import { useAuthStore } from "./store/useAuthStore";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
 
 function App() {
-  // ✅ Zustand hook call standard format
-  const store = useAuthStore();
-  
-  // ✅ Crucial Fix: Use a mutable reference to save the function instance 
-  // to completely protect it from React 19 production variable tracking collapse
-  const checkAuthRef = useRef(null);
+  const [debugError, setDebugError] = useState(null);
 
-  if (store && store.checkAuth) {
-    checkAuthRef.current = store.checkAuth;
+  // ==========================================
+  // CRITICAL CHECKPOINT 1: STORES & DEPENDENCIES
+  // ==========================================
+  console.log("=== [CHECKPOINT 1] DEPENDENCY TYPE CHECK ===");
+  console.log("1. useAuthStore exists?", !!useAuthStore);
+  console.log("2. Type of useAuthStore:", typeof useAuthStore);
+  
+  let store = null;
+  try {
+    if (typeof useAuthStore === "function") {
+      store = useAuthStore();
+      console.log("3. Store hook executed successfully. Store state:", store);
+    } else {
+      console.error("3. CRITICAL: useAuthStore is NOT a function! It is:", typeof useAuthStore);
+    }
+  } catch (err) {
+    console.error("3. CRITICAL FAILURE during useAuthStore execution:", err);
+    if (!debugError) setDebugError(`Store Crash: ${err.message}`);
   }
 
-  useEffect(() => {
-    // Isolated local runtime call to prevent 'e is not a function' crash
-    const executeAuth = async () => {
-      if (checkAuthRef.current && typeof checkAuthRef.current === "function") {
-        try {
-          await checkAuthRef.current();
-        } catch (err) {
-          console.error("Auth check internal failure:", err);
-        }
-      }
-    };
-    executeAuth();
-  }, []); // Run safely once on component layout mount
-
-  // Safe checks for rendering states
-  const isCheckingAuth = store ? store.isCheckingAuth : true;
+  const checkAuth = store ? store.checkAuth : null;
+  const isCheckingAuth = store ? store.isCheckingAuth : false;
   const authUser = store ? store.authUser : null;
 
-  if (isCheckingAuth) return <PageLoader />;
+  console.log("4. checkAuth type:", typeof checkAuth);
+  console.log("5. isCheckingAuth value:", isCheckingAuth);
+  console.log("6. authUser status:", authUser);
 
+  // ==========================================
+  // CRITICAL CHECKPOINT 2: EXECUTE AUTH CHECK
+  // ==========================================
+  useEffect(() => {
+    console.log("=== [CHECKPOINT 2] EFFECT TRIGGERED ===");
+    if (checkAuth && typeof checkAuth === "function") {
+      console.log("Initiating checkAuth() call...");
+      checkAuth();
+    } else {
+      console.error("Cannot execute checkAuth. Type is:", typeof checkAuth);
+      setDebugError(`checkAuth is ${typeof checkAuth}, expected function.`);
+    }
+  }, [checkAuth]);
+
+  // ==========================================
+  // CRITICAL CHECKPOINT 3: ROUTING & COMPONENTS
+  // ==========================================
+  console.log("=== [CHECKPOINT 3] COMPONENT RESOLUTION ===");
+  console.log("ChatPage component template:", !!ChatPage);
+  console.log("LoginPage component template:", !!LoginPage);
+  console.log("SignUp component template:", !!SignUp);
+  console.log("PageLoader component template:", !!PageLoader);
+
+  // If a crash was caught during execution, render a bulletproof recovery screen with logs
+  if (debugError) {
+    return (
+      <div className="min-h-screen bg-black text-red-500 p-8 font-mono flex flex-col justify-center items-center">
+        <h1 className="text-2xl font-bold mb-4">🚨 RUNTIME DEBUGGER CAUGHT ERROR:</h1>
+        <div className="bg-zinc-900 text-zinc-300 p-6 rounded-lg max-w-2xl w-full border border-red-900 shadow-xl">
+          <p className="text-red-400 font-bold mb-2">{debugError}</p>
+          <hr className="border-zinc-800 my-4" />
+          <p className="text-xs text-zinc-500">
+            Check your browser console logs immediately. Look for [CHECKPOINT] tags to find exactly where the mapping broke.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCheckingAuth) {
+    console.log("Rendering PageLoader screen...");
+    return <PageLoader />;
+  }
+
+  console.log("Rendering application core routes view layer...");
   return (
     <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
       {/* DECORATORS - GRID BG & GLOW SHAPES */}
