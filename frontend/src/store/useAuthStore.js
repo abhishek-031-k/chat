@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { axiosInstance } from "../axios"; // ✅ Make sure this points correctly to your axios file
+import { axiosInstance } from "../lib/axios.js"; // ✅ Added explicit .js extension to help Vite
 import toast from "react-hot-toast";
 
 export const useAuthStore = create((set) => ({
