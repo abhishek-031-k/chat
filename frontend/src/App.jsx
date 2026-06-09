@@ -8,51 +8,51 @@ import PageLoader from "./components/PageLoader";
 import { Toaster } from "react-hot-toast";
 
 function App() {
+  const [logs, setLogs] = useState([]);
   const store = useAuthStore();
-  const [internalCrash, setInternalCrash] = useState(null);
-  
+
+  const addLog = (msg, data = "") => {
+    const timestamp = new Date().toISOString().split("T")[1].slice(0, -1);
+    const text = `[${timestamp}] ${msg} ${data ? JSON.stringify(data) : ""}`;
+    console.log(text);
+    setLogs((prev) => [...prev, text]);
+  };
+
+  // Phase 1: Identity mapping checks on evaluation
+  if (logs.length === 0) {
+    addLog("Evaluating App Core Matrix Configuration...");
+    addLog("Dependency check -> useAuthStore exists?", !!useAuthStore);
+    addLog("Dependency check -> ChatPage exists?", !!ChatPage);
+    addLog("Dependency check -> LoginPage exists?", !!LoginPage);
+    addLog("Dependency check -> PageLoader exists?", !!PageLoader);
+  }
+
   const checkAuth = store ? store.checkAuth : null;
   const isCheckingAuth = store ? store.isCheckingAuth : false;
   const authUser = store ? store.authUser : null;
 
   useEffect(() => {
-    try {
-      if (typeof checkAuth === "function") {
-        checkAuth();
-      }
-    } catch (e) {
-      console.error("Crash during checkAuth call execution:", e);
-      setInternalCrash(`checkAuth Exec Failure: ${e.message}`);
+    addLog("Execution trigger inside useEffect loop");
+    if (typeof checkAuth === "function") {
+      addLog("Firing server endpoint validation -> checkAuth()");
+      checkAuth();
+    } else {
+      addLog("CRITICAL: checkAuth evaluation failed. Type is:", typeof checkAuth);
     }
   }, [checkAuth]);
 
-  // ==========================================
-  // MASTER DEFENSIVE RENDERING BOUNDARY
-  // ==========================================
-  // Vite 8 minifier loops ko bypass karne ke liye static JSX trees 
-  // ko runtime render objects mein badal dete hain jo kabhi crash nahi hote.
-  try {
-    if (isCheckingAuth) {
-      return <PageLoader />;
-    }
-  } catch (err) {
-    return (
-      <div className="bg-black text-red-500 p-6 font-mono min-h-screen flex flex-col justify-center items-center">
-        <h1 className="text-xl font-bold">🚨 PageLoader Component Crashed Production Build!</h1>
-        <p className="mt-2 text-zinc-400 text-sm">Error: {err.message}</p>
-      </div>
-    );
-  }
+  // Dynamic log tracking during store updates
+  useEffect(() => {
+    addLog("Store update detected. current state ->", { isCheckingAuth, hasUser: !!authUser });
+  }, [isCheckingAuth, authUser]);
 
-  // Agar runtime par kisi element ke functions toote hue hain, toh recovery screen render hogi
-  if (internalCrash) {
+  if (isCheckingAuth) {
     return (
-      <div className="bg-black text-red-400 p-8 font-mono min-h-screen flex flex-col justify-center items-center border-4 border-red-900">
-        <h1 className="text-2xl font-black mb-4">🚨 RUNTIME RECOVERY RADAR</h1>
-        <div className="bg-zinc-900 p-6 rounded-xl max-w-lg w-full border border-zinc-800">
-          <p className="font-bold text-red-500 mb-2">{internalCrash}</p>
-          <hr className="border-zinc-800 my-3" />
-          <p className="text-xs text-zinc-400">Check browser console logs to fetch structural identity trace.</p>
+      <div className="min-h-screen bg-slate-950 text-cyan-400 p-6 font-mono flex flex-col justify-between">
+        <PageLoader />
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-lg max-h-48 overflow-y-auto mt-4 text-xs">
+          <p className="text-zinc-500 font-bold border-b border-slate-800 pb-1 mb-1">LIVE MOUNT SYSTEM DEPLOYMENT LOGS:</p>
+          {logs.map((log, i) => <div key={i} className="py-0.5">{log}</div>)}
         </div>
       </div>
     );
@@ -60,47 +60,19 @@ function App() {
 
   return (
     <div className="min-h-screen bg-slate-900 relative flex items-center justify-center p-4 overflow-hidden">
-      {/* DECORATORS - GRID BG & GLOW SHAPES */}
+      {/* Dynamic persistent debug panel overlay - press Ctrl+H to toggle if needed, currently always visible in bottom corner for verification */}
+      <div className="fixed bottom-2 left-2 z-[99999] bg-black/90 text-[10px] text-zinc-400 p-2 rounded border border-zinc-800 max-w-xs font-mono select-none pointer-events-none opacity-40">
+        App Lifecycle Shell Rendered | User: ${!!authUser}
+      </div>
+
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#4f4f4f2e_1px,transparent_1px),linear-gradient(to_bottom,#4f4f4f2e_1px,transparent_1px)] bg-[size:14px_24px]" />
       <div className="absolute top-0 -left-4 size-96 bg-pink-500 opacity-20 blur-[100px]" />
       <div className="absolute bottom-0 -right-4 size-96 bg-cyan-500 opacity-20 blur-[100px]" />
 
-      {/* 
-        BULLETPROOF ROUTING PROTECTION:
-        We test each component execution context wrapper safely inline. 
-        If React Router breaks due to standard type matching, try block catches it.
-      */}
       <Routes>
-        <Route 
-          path="/" 
-          element={
-            authUser ? (
-              typeof ChatPage === "function" ? <ChatPage /> : <div className="text-red-500 p-4 font-mono font-bold bg-black">🚨 ChatPage is NOT a valid function export!</div>
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/login" 
-          element={
-            !authUser ? (
-              typeof LoginPage === "function" ? <LoginPage /> : <div className="text-red-500 p-4 font-mono font-bold bg-black">🚨 LoginPage is NOT a valid function export!</div>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
-        <Route 
-          path="/signup" 
-          element={
-            !authUser ? (
-              typeof SignUp === "function" ? <SignUp /> : <div className="text-red-500 p-4 font-mono font-bold bg-black">🚨 SignUp is NOT a valid function export!</div>
-            ) : (
-              <Navigate to="/" replace />
-            )
-          } 
-        />
+        <Route path="/" element={authUser ? <ChatPage /> : <Navigate to="/login" replace />} />
+        <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" replace />} />
+        <Route path="/signup" element={!authUser ? <SignUp /> : <Navigate to="/" replace />} />
       </Routes>
 
       <Toaster />
