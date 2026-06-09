@@ -13,16 +13,20 @@ import BorderAnimatedContainer from "../components/BorderAnimatedContainer";
 
 function LoginPage() {
   const [formData, setFormData] = useState({ email: "", password: "" });
-  const { login, isLoggingIn } = useAuthStore();
+  
+  // ✅ Zustand v5 optimized selector formatting
+  const login = useAuthStore((state) => state.login);
+  const isLoggingIn = useAuthStore((state) => state.isLoggingIn);
 
   // Handle Form Submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    login(formData);
+    if (typeof login === "function") {
+      login(formData);
+    }
   };
 
   return (
-    // Outer page wrapper - Deep sleek tech theme with elegant radial ambient glows
     <div className="relative w-full min-h-screen flex items-center justify-center p-4 md:p-8 bg-[#0b0f19] overflow-hidden">
       
       {/* Decorative Background Elements */}
@@ -30,18 +34,15 @@ function LoginPage() {
       <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-500/10 blur-[120px] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f29370a_1px,transparent_1px),linear-gradient(to_bottom,#1f29370a_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
       
-      {/* Card Wrapper with responsive spacing and premium shadows */}
+      {/* Card Wrapper */}
       <div className="relative w-full max-w-5xl z-10">
         <BorderAnimatedContainer>
           <div className="w-full flex flex-col md:flex-row overflow-hidden rounded-2xl border border-slate-800 bg-[#0d1527]/80 backdrop-blur-xl shadow-[0_0_50px_rgba(0,0,0,0.4)]">
             
-            {/* ==========================================
-                FORM COLUMN - LEFT SIDE (Interactive Form)
-                ========================================== */}
+            {/* FORM COLUMN - LEFT SIDE */}
             <div className="w-full md:w-1/2 p-8 md:p-14 flex items-center justify-center md:border-r border-slate-800/60">
               <div className="w-full max-w-md">
                 
-                {/* Header Information */}
                 <div className="text-center mb-10">
                   <div className="mx-auto w-14 h-14 rounded-2xl bg-gradient-to-tr from-violet-600 to-cyan-500 p-[1px] shadow-lg shadow-violet-500/10 mb-6 flex items-center justify-center">
                     <div className="w-full h-full rounded-[15px] bg-[#0d1527] flex items-center justify-center">
@@ -58,8 +59,6 @@ function LoginPage() {
 
                 {/* Login Form */}
                 <form onSubmit={handleSubmit} className="space-y-6">
-                  
-                  {/* Email Input Field */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5 auth-input-label">
                       Email
@@ -79,7 +78,6 @@ function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Password Input Field */}
                   <div>
                     <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2.5 auth-input-label">
                       Password
@@ -99,7 +97,6 @@ function LoginPage() {
                     </div>
                   </div>
 
-                  {/* Action Submit Button */}
                   <button 
                     type="submit" 
                     className="w-full py-3.5 px-4 mt-6 bg-gradient-to-r from-violet-600 to-cyan-500 hover:from-violet-500 hover:to-cyan-400 text-white font-semibold rounded-xl shadow-lg shadow-cyan-500/10 hover:shadow-cyan-500/20 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none transition-all duration-300 flex items-center justify-center auth-btn" 
@@ -114,7 +111,6 @@ function LoginPage() {
                   
                 </form>
 
-                {/* Form Footer Links */}
                 <div className="mt-10 text-center">
                   <Link 
                     to="/signup" 
@@ -127,17 +123,10 @@ function LoginPage() {
               </div>
             </div>
 
-            {/* ==========================================
-                FORM ILLUSTRATION - RIGHT SIDE (Visual Panel)
-                ========================================== */}
+            {/* FORM ILLUSTRATION - RIGHT SIDE */}
             <div className="hidden md:w-1/2 md:flex flex-col items-center justify-center p-12 relative bg-slate-950/30">
-              
-              {/* Internal glow for illustration panel */}
               <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-cyan-500/5 blur-[80px] pointer-events-none" />
-              
               <div className="max-w-sm w-full z-10 flex flex-col items-center">
-                
-                {/* Illustration Asset Container */}
                 <div className="w-full relative transition-all duration-500 hover:scale-105">
                   <div className="absolute inset-0 bg-gradient-to-tr from-violet-600/10 to-cyan-500/10 blur-3xl rounded-3xl" />
                   <img
@@ -146,13 +135,10 @@ function LoginPage() {
                     className="w-full h-auto object-contain opacity-95 relative drop-shadow-[0_20px_50px_rgba(8,145,178,0.15)]"
                   />
                 </div>
-                
-                {/* Copywriting & Badges */}
                 <div className="mt-8 text-center">
                   <h3 className="text-xl font-bold tracking-wide bg-gradient-to-r from-cyan-400 to-violet-400 bg-clip-text text-transparent">
                     Connect anytime, anywhere
                   </h3>
-                  
                   <div className="mt-6 flex flex-wrap justify-center gap-2.5">
                     <span className="px-3.5 py-1 text-xs font-semibold rounded-full border border-violet-500/20 bg-violet-500/5 text-violet-300 shadow-sm backdrop-blur-md auth-badge">
                       Free
@@ -165,7 +151,6 @@ function LoginPage() {
                     </span>
                   </div>
                 </div>
-                
               </div>
             </div>
 
