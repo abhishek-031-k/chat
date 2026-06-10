@@ -1,24 +1,15 @@
 import jwt from "jsonwebtoken";
-import { ENV } from "./env.js";
 
 export const generateToken = (userId, res) => {
-  const { JWT_SECRET } = ENV;
-  if (!JWT_SECRET) {
-    throw new Error("JWT_SECRET is not configured");
-  }
-
-  const token = jwt.sign({ userId }, JWT_SECRET, {
-    expiresIn: "7d",
+  const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: "15d",
   });
 
-  // Check if we are in development mode
-  const isDevelopment = ENV.NODE_ENV === "development";
-
   res.cookie("jwt", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in MS
-    httpOnly: true, // Prevent XSS attacks
-    sameSite: isDevelopment ? "strict" : "none", // 'strict' for local, 'none' for Vercel->Render
-    secure: !isDevelopment, // false for local, true for Vercel->Render
+    maxAge: 15 * 24 * 60 * 60 * 1000, // 15 days
+    httpOnly: true, // XSS protection
+    sameSite: "none", // Vercel (Frontend) aur Render (Backend) cross-origin ke liye zaroori
+    secure: true, // sameSite "none" ke sath secure hamesha true hona chahiye
   });
 
   return token;
