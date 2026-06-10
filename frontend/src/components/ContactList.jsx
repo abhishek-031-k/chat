@@ -2,33 +2,30 @@ import { useEffect } from "react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import UsersLoadingSkeleton from "./UsersLoadingSkeleton";
-import NoChatsFound from "./NoChatsFound";
 
-function ContactList() {
-  // Safe Zustand Selectors mapped to actual store functions
-  const getUsers = useChatStore((state) => state.getUsers);
-  const users = useChatStore((state) => state.users) || [];
-  const isUsersLoading = useChatStore((state) => state.isUsersLoading);
-  const setSelectedUser = useChatStore((state) => state.setSelectedUser);
-  const selectedUser = useChatStore((state) => state.selectedUser);
+function ContactsList() {
+  const { getAllContacts, allContacts = [], isUsersLoading, setSelectedUser, selectedUser } = useChatStore();
   
-  const authUser = useAuthStore((state) => state.authUser);
-  const onlineUsers = useAuthStore((state) => state.onlineUsers) || [];
+  // 1. IMPORT AUTHUSER: Grab your own profile data from the store
+  const { authUser, onlineUsers = [] } = useAuthStore();
 
   useEffect(() => {
-    if (typeof getUsers === "function") {
-      getUsers();
-    }
-  }, [getUsers]);
+    getAllContacts();
+  }, [getAllContacts]);
 
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
-  const filteredContacts = users?.filter((user) => user?._id !== authUser?._id) || [];
+  // 2. THE FIX: Filter out your own ID from the contacts array
+  const filteredContacts = allContacts.filter((contact) => contact?._id !== authUser?._id);
 
-  if (!isUsersLoading && filteredContacts.length === 0) return <NoChatsFound />;
+  // 3. Update the empty check to look at the filtered list
+  if (!isUsersLoading && filteredContacts.length === 0) {
+    return <div className="p-8 text-center text-slate-500">No contacts found</div>;
+  }
 
   return (
     <div className="flex flex-col gap-1 overflow-y-auto">
+      {/* 4. Map over the NEW filteredContacts array instead of allContacts */}
       {filteredContacts.map((contact) => (
         <button
           key={contact?._id}
@@ -47,11 +44,9 @@ function ContactList() {
               <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-slate-900" />
             )}
           </div>
-          <div className="text-left min-w-0 flex-1">
+          <div className="text-left min-w-0">
             <div className="font-medium text-slate-200 truncate">{contact?.fullName}</div>
-            <div className="text-xs text-slate-500">
-              {onlineUsers.includes(contact?._id) ? "Online" : "Offline"}
-            </div>
+            <div className="text-xs text-slate-400">Available</div>
           </div>
         </button>
       ))}
@@ -59,4 +54,4 @@ function ContactList() {
   );
 }
 
-export default ContactList;
+export default ContactsList;
