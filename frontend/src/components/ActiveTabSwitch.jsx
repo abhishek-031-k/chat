@@ -1,40 +1,44 @@
-import { MessageSquare, Users } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 
 function ActiveTabSwitch() {
-  // Safe Zustand Selectors
-  const activeTab = useChatStore((state) => state.activeTab) || "chats";
-  const setActiveTab = useChatStore((state) => state.setActiveTab);
+  // 1. Zustand store se activeTab state aur use badalne wala function (setActiveTab) nikaalo
+  const { activeTab, setActiveTab, getAllContacts, getMyChatPartners } = useChatStore();
 
   const handleTabChange = (tab) => {
-    if (typeof setActiveTab === "function") {
-      setActiveTab(tab);
+    setActiveTab(tab);
+    
+    // 2. EXTRA FIX: Jab tab switch ho, toh data bhi fetch karlo 
+    // taaki wo "1 second blank" wala glitch kam se kam ho.
+    if (tab === "contacts") {
+      getAllContacts();
+    } else {
+      getMyChatPartners();
     }
   };
 
   return (
-    <div className="flex items-center gap-2 p-4 border-b border-slate-700/50 bg-slate-800/20">
+    <div className="flex p-2 gap-2 bg-slate-900/40 rounded-xl m-4 border border-slate-700/30">
+      {/* CHATS BUTTON */}
       <button
         onClick={() => handleTabChange("chats")}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${
           activeTab === "chats"
-            ? "bg-slate-700 text-cyan-400 shadow-sm"
-            : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+            : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
         }`}
       >
-        <MessageSquare className="w-4 h-4" />
         Chats
       </button>
 
+      {/* CONTACTS BUTTON */}
       <button
         onClick={() => handleTabChange("contacts")}
-        className={`flex-1 flex items-center justify-center gap-2 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+        className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${
           activeTab === "contacts"
-            ? "bg-slate-700 text-cyan-400 shadow-sm"
-            : "text-slate-400 hover:bg-slate-800 hover:text-slate-200"
+            ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
+            : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
         }`}
       >
-        <Users className="w-4 h-4" />
         Contacts
       </button>
     </div>
