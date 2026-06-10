@@ -5,19 +5,18 @@ import UsersLoadingSkeleton from "./UsersLoadingSkeleton";
 import NoChatsFound from "./NoChatsFound";
 
 function ChatsList() {
-  // ✅ FIX 1: Zustand v5 safe selectors + Sahi variables ke naam (getUsers aur users)
+  // Zustand v5 safe selectors without triggering infinite loops
   const getUsers = useChatStore((state) => state.getUsers);
-  const users = useChatStore((state) => state.users || []);
+  const users = useChatStore((state) => state.users) || [];
   const isUsersLoading = useChatStore((state) => state.isUsersLoading);
   const setSelectedUser = useChatStore((state) => state.setSelectedUser);
   const selectedUser = useChatStore((state) => state.selectedUser);
   
   // Safe extraction for Auth Store
   const authUser = useAuthStore((state) => state.authUser);
-  const onlineUsers = useAuthStore((state) => state.onlineUsers || []);
+  const onlineUsers = useAuthStore((state) => state.onlineUsers) || [];
 
   useEffect(() => {
-    // Sahi function call kiya gaya hai
     if (typeof getUsers === "function") {
       getUsers();
     }
@@ -25,15 +24,14 @@ function ChatsList() {
 
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
-  // 2. THE FIX: Filter out your own ID from the 'users' array
+  // Filter out your own ID from the 'users' array
   const filteredChats = users?.filter((user) => user?._id !== authUser?._id) || [];
 
-  // 3. Update the empty check to look at the NEW filtered list
+  // Update the empty check to look at the NEW filtered list
   if (!isUsersLoading && filteredChats.length === 0) return <NoChatsFound />;
 
   return (
     <div className="flex flex-col gap-1 overflow-y-auto">
-      {/* 4. Map over filteredChats instead of the raw users array */}
       {filteredChats.map((chat) => (
         <button
           key={chat?._id}
