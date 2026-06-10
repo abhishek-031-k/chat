@@ -10,10 +10,9 @@ import ChatContainer from "../components/ChatContainer";
 import NoConversationPlaceholder from "../components/NoConversationPlaceholder";
 
 function ChatPage() {
-  // ✅ Zustand v5 Production Fix: Destructuring hata kar explicit state callback selectors use kiye hain.
-  // Isse Vite 8 ka minifier variable 'e' ko block ya crash nahi kar payega.
-  const activeTab = useChatStore((state) => state.activeTab || "chats");
-  const selectedUser = useChatStore((state) => state.selectedUser || null);
+  // Safe Fallback logic outside selector
+  const activeTab = useChatStore((state) => state.activeTab) || "chats";
+  const selectedUser = useChatStore((state) => state.selectedUser) || null;
 
   return (
     <div className="w-full min-h-screen flex items-center justify-center p-4 md:p-8 bg-slate-900 overflow-hidden">
