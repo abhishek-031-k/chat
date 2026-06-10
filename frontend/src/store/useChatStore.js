@@ -1,45 +1,61 @@
 import { create } from "zustand";
-import toast from "react-hot-toast";
 import { axiosInstance } from "../lib/axios";
+import toast from "react-hot-toast";
 import { useAuthStore } from "./useAuthStore";
 
 export const useChatStore = create((set, get) => ({
-  // --- UI STATE ---
-  activeTab: "chats",
-  soundEnabled: true,
-  
-  // --- DATA STATE ---
+  allContacts: [],
+  chats: [],
   messages: [],
-  users: [],
+  activeTab: "chats",
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  isSoundEnabled: JSON.parse(localStorage.getItem("isSoundEnabled")) === true,
 
-  // --- UI ACTIONS ---
-  setActiveTab: (tab) => set({ activeTab: tab }),
-  toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
+  toggleSound: () => {
+    localStorage.setItem("isSoundEnabled", !get().isSoundEnabled);
+    set({ isSoundEnabled: !get().isSoundEnabled });
+  },
+
+  setActiveTab: (tab) => 
+    set({ 
+      activeTab: tab, 
+      selectedUser: null, 
+      messages: []        
+    }),
   setSelectedUser: (selectedUser) => set({ selectedUser }),
 
-  // --- API ACTIONS (getUsers acts as getting both contacts and chat partners) ---
-  getUsers: async () => {
+  getAllContacts: async () => {
     set({ isUsersLoading: true });
     try {
-      const res = await axiosInstance.get("/messages/users");
-      set({ users: res.data });
+      const res = await axiosInstance.get("/messages/contacts");
+      set({ allContacts: res.data });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to load users");
+      toast.error(error.response.data.message);
+    } finally {
+      set({ isUsersLoading: false });
+    }
+  },
+  getMyChatPartners: async () => {
+    set({ isUsersLoading: true });
+    try {
+      const res = await axiosInstance.get("/messages/chats");
+      set({ chats: res.data });
+    } catch (error) {
+      toast.error(error.response.data.message);
     } finally {
       set({ isUsersLoading: false });
     }
   },
 
-  getMessages: async (userId) => {
+  getMessagesByUserId: async (userId) => {
     set({ isMessagesLoading: true });
     try {
       const res = await axiosInstance.get(`/messages/${userId}`);
       set({ messages: res.data });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to load messages");
+      toast.error(error.response?.data?.message || "Something went wrong");
     } finally {
       set({ isMessagesLoading: false });
     }
@@ -47,33 +63,56 @@ export const useChatStore = create((set, get) => ({
 
   sendMessage: async (messageData) => {
     const { selectedUser, messages } = get();
+    const { authUser } = useAuthStore.getState();
+
+    const tempId = `temp-${Date.now()}`;
+
+    const optimisticMessage = {
+      _id: tempId,
+      senderId: authUser._id,
+      receiverId: selectedUser._id,
+      text: messageData.text,
+      image: messageData.image,
+      createdAt: new Date().toISOString(),
+      isOptimistic: true, // flag to identify optimistic messages (optional)
+    };
+    // immidetaly update the ui by adding the message
+    set({ messages: [...messages, optimisticMessage] });
+
     try {
       const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-      set({ messages: [...messages, res.data] });
+      set({ messages: messages.concat(res.data) });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send message");
+      // remove optimistic message on failure
+      set({ messages: messages });
+      toast.error(error.response?.data?.message || "Something went wrong");
     }
   },
 
-  // --- SOCKET ACTIONS ---
   subscribeToMessages: () => {
-    const { selectedUser } = get();
+    const { selectedUser, isSoundEnabled } = get();
     if (!selectedUser) return;
 
     const socket = useAuthStore.getState().socket;
 
     socket.on("newMessage", (newMessage) => {
-      const isMessageFromSelectedUser = newMessage.senderId === selectedUser._id;
-      if (!isMessageFromSelectedUser) return;
+      const isMessageSentFromSelectedUser = newMessage.senderId === selectedUser._id;
+      if (!isMessageSentFromSelectedUser) return;
 
-      set({
-        messages: [...get().messages, newMessage],
-      });
+      const currentMessages = get().messages;
+      set({ messages: [...currentMessages, newMessage] });
+
+      if (isSoundEnabled) {
+        const notificationSound = new Audio("/sounds/notification.mp3");
+
+        notificationSound.currentTime = 0; // reset to start
+        notificationSound.play().catch((e) => console.log("Audio play failed:", e));
+      }
     });
   },
 
   unsubscribeFromMessages: () => {
     const socket = useAuthStore.getState().socket;
-    socket?.off("newMessage");
+    socket.off("newMessage");
   },
 }));
