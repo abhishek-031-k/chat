@@ -20,7 +20,7 @@ export const useChatStore = create((set, get) => ({
   toggleSound: () => set((state) => ({ soundEnabled: !state.soundEnabled })),
   setSelectedUser: (selectedUser) => set({ selectedUser }),
 
-  // --- API ACTIONS ---
+  // --- API ACTIONS (getUsers acts as getting both contacts and chat partners) ---
   getUsers: async () => {
     set({ isUsersLoading: true });
     try {
