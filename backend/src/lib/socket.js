@@ -9,7 +9,6 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    // Dynamic origin checking: Allows any Vercel deployment without manual URL updates
     origin: function (origin, callback) {
       if (!origin || origin.endsWith(".vercel.app")) {
         callback(null, true);
@@ -20,7 +19,7 @@ const io = new Server(server, {
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   },
-  transports: ["websocket"], // Force WebSocket for better production stability
+  transports: ["polling", "websocket"], // ← FIXED: polling bhi allow kiya
   pingInterval: 10000,
   pingTimeout: 5000,
 });
@@ -34,13 +33,12 @@ export function getReceiverSocketId(userId) {
 }
 
 // Stores online users: {userId: socketId}
-const userSocketMap = {}; 
+const userSocketMap = {};
 
 io.on("connection", (socket) => {
   console.log("A user connected", socket.user.fullName);
-
   const userId = socket.user._id.toString();
-  
+
   userSocketMap[userId] = socket.id;
 
   // Send list of online users to all clients
