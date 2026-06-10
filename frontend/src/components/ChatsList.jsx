@@ -5,26 +5,35 @@ import UsersLoadingSkeleton from "./UsersLoadingSkeleton";
 import NoChatsFound from "./NoChatsFound";
 
 function ChatsList() {
-  const { getMyChatPartners, chats = [], isUsersLoading, setSelectedUser, selectedUser } = useChatStore();
+  // ✅ FIX 1: Zustand v5 safe selectors + Sahi variables ke naam (getUsers aur users)
+  const getUsers = useChatStore((state) => state.getUsers);
+  const users = useChatStore((state) => state.users || []);
+  const isUsersLoading = useChatStore((state) => state.isUsersLoading);
+  const setSelectedUser = useChatStore((state) => state.setSelectedUser);
+  const selectedUser = useChatStore((state) => state.selectedUser);
   
-  // 1. IMPORT AUTHUSER: Grab your own profile data from the store
-  const { authUser, onlineUsers = [] } = useAuthStore();
+  // Safe extraction for Auth Store
+  const authUser = useAuthStore((state) => state.authUser);
+  const onlineUsers = useAuthStore((state) => state.onlineUsers || []);
 
   useEffect(() => {
-    getMyChatPartners();
-  }, [getMyChatPartners]);
+    // Sahi function call kiya gaya hai
+    if (typeof getUsers === "function") {
+      getUsers();
+    }
+  }, [getUsers]);
 
   if (isUsersLoading) return <UsersLoadingSkeleton />;
 
-  // 2. THE FIX: Filter out your own ID from the chats array
-  const filteredChats = chats?.filter((chat) => chat?._id !== authUser?._id) || [];
+  // 2. THE FIX: Filter out your own ID from the 'users' array
+  const filteredChats = users?.filter((user) => user?._id !== authUser?._id) || [];
 
   // 3. Update the empty check to look at the NEW filtered list
   if (!isUsersLoading && filteredChats.length === 0) return <NoChatsFound />;
 
   return (
     <div className="flex flex-col gap-1 overflow-y-auto">
-      {/* 4. Map over filteredChats instead of the raw chats array */}
+      {/* 4. Map over filteredChats instead of the raw users array */}
       {filteredChats.map((chat) => (
         <button
           key={chat?._id}
