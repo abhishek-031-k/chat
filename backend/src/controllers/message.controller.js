@@ -5,6 +5,11 @@ import User from "../models/User.js";
 
 export const getAllContacts = async (req, res) => {
   try {
+    // 🛡️ SAFE GUARD: Check if req.user exists before reading _id
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized: Token missing or invalid" });
+    }
+
     const loggedInUserId = req.user._id;
     const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select("-password");
 
@@ -17,6 +22,11 @@ export const getAllContacts = async (req, res) => {
 
 export const getMessagesByUserId = async (req, res) => {
   try {
+    // 🛡️ SAFE GUARD
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized: Token missing or invalid" });
+    }
+
     const myId = req.user._id;
     const { id: userToChatId } = req.params;
 
@@ -36,6 +46,11 @@ export const getMessagesByUserId = async (req, res) => {
 
 export const sendMessage = async (req, res) => {
   try {
+    // 🛡️ SAFE GUARD
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized: Token missing or invalid" });
+    }
+
     const { text, image } = req.body;
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
@@ -81,6 +96,11 @@ export const sendMessage = async (req, res) => {
 
 export const getChatPartners = async (req, res) => {
   try {
+    // 🛡️ SAFE GUARD
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ message: "Unauthorized: Token missing or invalid" });
+    }
+
     const loggedInUserId = req.user._id;
 
     // find all the messages where the logged-in user is either sender or receiver
@@ -90,11 +110,14 @@ export const getChatPartners = async (req, res) => {
 
     const chatPartnerIds = [
       ...new Set(
-        messages.map((msg) =>
-          msg.senderId.toString() === loggedInUserId.toString()
+        messages.map((msg) => {
+          // Prevent crash if a message was saved without senderId/receiverId
+          if (!msg.senderId || !msg.receiverId) return null;
+          
+          return msg.senderId.toString() === loggedInUserId.toString()
             ? msg.receiverId.toString()
-            : msg.senderId.toString()
-        )
+            : msg.senderId.toString();
+        }).filter(id => id !== null) 
       ),
     ];
 
